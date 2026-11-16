@@ -88,19 +88,45 @@
           <h2 class="text-sm font-semibold text-slate-700">Add New Item to Store (Owner)</h2>
           <span class="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">v3.0</span>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
-          <div class="sm:col-span-8">
+        <div class="grid grid-cols-12 gap-2.5">
+          <div class="col-span-12 sm:col-span-5">
             <label for="itemName" class="block text-xs font-medium text-slate-600 mb-1">Item Name</label>
             <input
               id="itemName"
               type="text"
-              placeholder="e.g., Atta 5kg"
+              placeholder="e.g., Atta, Dal, Tel"
               required
               class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
-          <div class="sm:col-span-4">
-            <label for="itemPrice" class="block text-xs font-medium text-slate-600 mb-1">Price (₹)</label>
+          <div class="col-span-4 sm:col-span-2">
+            <label for="itemQty" class="block text-xs font-medium text-slate-600 mb-1">Qty</label>
+            <input
+              id="itemQty"
+              type="number"
+              min="0.1"
+              step="any"
+              value="1"
+              required
+              class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+          <div class="col-span-4 sm:col-span-2">
+            <label for="itemUnit" class="block text-xs font-medium text-slate-600 mb-1">Unit</label>
+            <select
+              id="itemUnit"
+              class="w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="kg">kg</option>
+              <option value="g">g</option>
+              <option value="L">L</option>
+              <option value="ml">ml</option>
+              <option value="pcs">pcs</option>
+              <option value="pkt">pkt</option>
+            </select>
+          </div>
+          <div class="col-span-4 sm:col-span-3">
+            <label for="itemPrice" class="block text-xs font-medium text-slate-600 mb-1">Rate (₹)</label>
             <input
               id="itemPrice"
               type="number"
@@ -108,7 +134,7 @@
               step="any"
               placeholder="240"
               required
-              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
         </div>
@@ -410,7 +436,9 @@
           const thumb = document.createElement("img");
           thumb.src = item.image;
           thumb.alt = item.name;
-          thumb.className = "w-11 h-11 rounded-lg object-cover border border-slate-200 shrink-0";
+          thumb.title = "Tap to zoom";
+          thumb.className = "w-12 h-12 rounded-lg object-cover border border-slate-200 shrink-0 cursor-zoom-in";
+          thumb.addEventListener("click", () => openPhotoModal(item.image, item.name));
           leftWrap.appendChild(thumb);
         } else {
           const placeholder = document.createElement("div");
@@ -426,9 +454,10 @@
         nameEl.className = "text-sm font-medium text-slate-800 break-words";
         nameEl.textContent = item.name;
 
+        const unitLabel = item.unit ? ((item.qty || 1) + " " + item.unit + " • ") : "";
         const priceEl = document.createElement("p");
         priceEl.className = "text-xs font-semibold text-emerald-700";
-        priceEl.textContent = formatRupees(item.price);
+        priceEl.textContent = unitLabel + formatRupees(item.price);
 
         infoDiv.appendChild(nameEl);
         infoDiv.appendChild(priceEl);
@@ -438,6 +467,23 @@
         rightDiv.className = isOwnerMode ? "flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end pt-1 sm:pt-0" : "flex items-center gap-2 shrink-0";
 
         if (isOwnerMode) {
+          const editQty = document.createElement("input");
+          editQty.type = "number";
+          editQty.min = "0.1";
+          editQty.step = "any";
+          editQty.value = item.qty || 1;
+          editQty.className = "w-14 rounded-lg border border-slate-300 px-1.5 py-1 text-xs text-center focus:outline-none focus:ring-2 focus:ring-emerald-500";
+
+          const editUnit = document.createElement("select");
+          editUnit.className = "rounded-lg border border-slate-300 bg-white px-1.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500";
+          ["kg", "g", "L", "ml", "pcs", "pkt"].forEach((u) => {
+            const opt = document.createElement("option");
+            opt.value = u;
+            opt.textContent = u;
+            if ((item.unit || "kg") === u) opt.selected = true;
+            editUnit.appendChild(opt);
+          });
+
           const editInput = document.createElement("input");
           editInput.type = "number";
           editInput.min = "1";
@@ -451,8 +497,11 @@
           saveBtn.className = "text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-md transition-colors";
           saveBtn.addEventListener("click", () => {
             const newPrice = parseFloat(editInput.value);
+            const newQty = parseFloat(editQty.value);
             if (!isNaN(newPrice) && newPrice > 0) {
               item.price = newPrice;
+              item.qty = (!isNaN(newQty) && newQty > 0) ? newQty : 1;
+              item.unit = editUnit.value;
               syncCatalogToCloud();
               renderCatalog();
               renderCart();
@@ -472,6 +521,8 @@
             renderCart();
           });
 
+          rightDiv.appendChild(editQty);
+          rightDiv.appendChild(editUnit);
           rightDiv.appendChild(editInput);
           rightDiv.appendChild(saveBtn);
           rightDiv.appendChild(delBtn);
@@ -658,9 +709,49 @@
     clearImageBtn.addEventListener("click", clearSelectedImage);
 
     // Owner: Add new item
+    const itemQtyInput = document.getElementById("itemQty");
+    const itemUnitSelect = document.getElementById("itemUnit");
+    const photoModal = document.getElementById("photoModal");
+    const photoModalImg = document.getElementById("photoModalImg");
+    const photoModalTitle = document.getElementById("photoModalTitle");
+    const closePhotoModal = document.getElementById("closePhotoModal");
+    const zoomInBtn = document.getElementById("zoomInBtn");
+    const zoomOutBtn = document.getElementById("zoomOutBtn");
+    const zoomResetBtn = document.getElementById("zoomResetBtn");
+    let currentZoom = 1;
+
+    function openPhotoModal(src, title) {
+      currentZoom = 1;
+      photoModalImg.src = src;
+      photoModalTitle.textContent = title || "Item Photo";
+      photoModalImg.style.transform = "scale(1)";
+      zoomResetBtn.textContent = "100%";
+      photoModal.classList.remove("hidden");
+    }
+
+    function updateZoom(delta) {
+      currentZoom = Math.min(3, Math.max(0.5, +(currentZoom + delta).toFixed(2)));
+      photoModalImg.style.transform = "scale(" + currentZoom + ")";
+      zoomResetBtn.textContent = Math.round(currentZoom * 100) + "%";
+    }
+
+    zoomInBtn.addEventListener("click", () => updateZoom(0.35));
+    zoomOutBtn.addEventListener("click", () => updateZoom(-0.35));
+    zoomResetBtn.addEventListener("click", () => { currentZoom = 1; updateZoom(0); });
+    closePhotoModal.addEventListener("click", () => photoModal.classList.add("hidden"));
+    photoModal.addEventListener("click", (e) => {
+      if (e.target === photoModal) photoModal.classList.add("hidden");
+    });
+    imagePreview.classList.add("cursor-zoom-in");
+    imagePreview.addEventListener("click", () => {
+      if (imagePreview.src) openPhotoModal(imagePreview.src, itemNameInput.value.trim() || "Preview");
+    });
+
     itemForm.addEventListener("submit", (event) => {
       event.preventDefault();
       const name = itemNameInput.value.trim();
+      const qty = parseFloat(itemQtyInput.value) || 1;
+      const unit = itemUnitSelect.value || "kg";
       const price = parseFloat(itemPriceInput.value);
       if (!name || isNaN(price) || price <= 0) return;
 
@@ -668,6 +759,8 @@
       catalog.push({
         id: nextId++,
         name,
+        qty,
+        unit,
         price,
         image: selectedImageData || urlImg,
         icon: selectedIcon
@@ -675,6 +768,7 @@
       syncCatalogToCloud();
       clearSelectedImage();
       itemForm.reset();
+      itemQtyInput.value = "1";
       itemNameInput.focus();
       renderCatalog();
     });
@@ -778,5 +872,22 @@
     // Initial render
     updateModeUI();
   </script>
+
+  <!-- Photo Zoom Modal (Bada / Chota) -->
+  <div id="photoModal" class="hidden fixed inset-0 z-50 bg-black/85 flex flex-col items-center justify-between p-4">
+    <div class="w-full max-w-md flex items-center justify-between text-white">
+      <p id="photoModalTitle" class="text-sm font-semibold truncate pr-3"></p>
+      <button id="closePhotoModal" type="button" class="px-3 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-sm font-bold">✕ Close</button>
+    </div>
+    <div class="flex-1 w-full flex items-center justify-center overflow-auto my-3">
+      <img id="photoModalImg" src="" alt="Item Photo" class="max-h-[70vh] max-w-full rounded-xl object-contain transition-transform duration-150 origin-center" style="transform: scale(1);" />
+    </div>
+    <div class="flex items-center gap-3 bg-white/15 backdrop-blur px-4 py-2 rounded-full text-white">
+      <button id="zoomOutBtn" type="button" class="px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 text-sm font-bold">− Chota</button>
+      <button id="zoomResetBtn" type="button" class="px-2.5 py-1 text-xs font-semibold">100%</button>
+      <button id="zoomInBtn" type="button" class="px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 text-sm font-bold">+ Bada</button>
+    </div>
+  </div>
+
 </body>
 </html>
