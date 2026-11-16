@@ -401,10 +401,10 @@
 
       catalog.forEach((item) => {
         const li = document.createElement("li");
-        li.className = "flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 transition-colors";
+        li.className = isOwnerMode ? "flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 px-4 py-3 hover:bg-slate-50 transition-colors" : "flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 transition-colors";
 
         const leftWrap = document.createElement("div");
-        leftWrap.className = "flex items-center gap-3 min-w-0";
+        leftWrap.className = "flex items-center gap-3 min-w-0 flex-1";
 
         if (item.image) {
           const thumb = document.createElement("img");
@@ -423,7 +423,7 @@
         infoDiv.className = "min-w-0";
 
         const nameEl = document.createElement("p");
-        nameEl.className = "text-sm font-medium text-slate-800 truncate";
+        nameEl.className = "text-sm font-medium text-slate-800 break-words";
         nameEl.textContent = item.name;
 
         const priceEl = document.createElement("p");
@@ -435,7 +435,7 @@
         leftWrap.appendChild(infoDiv);
 
         const rightDiv = document.createElement("div");
-        rightDiv.className = "flex items-center gap-2 shrink-0";
+        rightDiv.className = isOwnerMode ? "flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end pt-1 sm:pt-0" : "flex items-center gap-2 shrink-0";
 
         if (isOwnerMode) {
           const editInput = document.createElement("input");
